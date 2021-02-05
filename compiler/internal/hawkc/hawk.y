@@ -32,7 +32,7 @@ var (
 	blockstmt *BlockStmt
 }
 
-%type <decl>      decl paction funcdecl
+%type <decl>      decl action funcdecl
 %type <symlist>   arglist
 %type <decllist>  decllist
 %type <expr>      expr oexpr uexpr indexexpr addressable
@@ -43,7 +43,6 @@ var (
 
 %token <sym>  IDENT BOOL STRING PRINT
 %token <val>  NUM
-%token        BEGIN END
 %token        IF ELSE
 %token        FOR IN BREAK CONTINUE
 %token        INC DEC
@@ -66,12 +65,8 @@ top:
 	{
 		for _, d := range $1 {
 			switch d := d.(type) {
-			case *BeginAction:
-				ast.Begins = append(ast.Begins, d)
-			case *EndAction:
-				ast.Ends = append(ast.Ends, d)
-			case *PatternAction:
-				ast.Pactions = append(ast.Pactions, d)
+			case *Action:
+				ast.Actions = append(ast.Actions, d)
 			case *FuncDecl:
 				ast.funcs[d.Name] = d
 			default:
@@ -91,7 +86,7 @@ decllist:
 	}
 
 decl:
-	paction
+	action
 	{
 		$$ = $1
 	}
@@ -100,22 +95,10 @@ decl:
 		$$ = $1
 	}
 
-paction:
-	oexpr blockstmt
+action:
+	blockstmt
 	{
-		$$ = &PatternAction{$1, $2}
-	}
-|	expr
-	{
-		$$ = &PatternAction{$1, defaultAction}
-	}
-|	BEGIN blockstmt
-	{
-		$$ = &BeginAction{$2}
-	}
-|	END blockstmt
-	{
-		$$ = &EndAction{$2}
+		$$ = &Action{$1}
 	}
 
 funcdecl:

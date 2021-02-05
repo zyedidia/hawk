@@ -25,9 +25,11 @@ type Program struct {
 	outputRowSep   string
 	outputFieldSep string
 
-	Begins   []Stmt
-	Pactions []Stmt
-	Ends     []Stmt
+	Actions []Stmt
+}
+
+type Action struct {
+	Stmt
 }
 
 func NewProgram(sc *scan.Scanner) *Program {
@@ -90,64 +92,13 @@ func (p *Program) Run(out io.Writer, in scan.Source) (err error) {
 			}
 		}
 	}()
-	p.Begin(out)
-	if p.anyPatternActions() {
-		p.sc.SetSource(in)
-		for p.sc.Scan() {
-			for _, a := range p.Pactions {
-				a.Exec(out)
-			}
-		}
-		if err := p.sc.Err(); err != nil {
-			return err
-		}
-		p.End(out)
-	}
-	// TODO: return something like p.Err()
-	return nil
-}
-
-func (p *Program) Begin(w io.Writer) {
-	for _, a := range p.Begins {
-		a.Exec(w)
-	}
-}
-
-func (p *Program) End(w io.Writer) {
-	for _, a := range p.Ends {
-		a.Exec(w)
-	}
-}
-
-func (p *Program) anyPatternActions() bool {
-	return len(p.Pactions) > 0 || len(p.Ends) > 0
-}
-
-type BeginAction struct {
-	Stmt
-}
-
-type EndAction struct {
-	Stmt
-}
-
-type PatternAction struct {
-	X    Expr
-	Body Stmt
-}
-
-func (p *PatternAction) Exec(w io.Writer) Status {
-	if p.X != nil {
-		v, ok := p.X.Eval(w).Scalar()
-		if !ok {
-			throw("Pattern in an Body must be a scalar value")
-		}
-		if !v.Bool() {
-			return StatusNone
+	p.sc.SetSource(in)
+	for p.sc.Scan() {
+		for _, a := range p.Actions {
+			a.Exec(out)
 		}
 	}
-	p.Body.Exec(w)
-	return StatusNone
+	return p.sc.Err()
 }
 
 type FuncDecl struct {

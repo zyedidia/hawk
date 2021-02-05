@@ -262,8 +262,6 @@ var symbols = []struct {
 	name string
 	tok  int
 }{
-	{"BEGIN", BEGIN},
-	{"END", END},
 	{"if", IF},
 	{"else", ELSE},
 	{"for", FOR},

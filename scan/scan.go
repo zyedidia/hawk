@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"regexp"
 	"strings"
 )
@@ -123,21 +124,26 @@ func (sc *Scanner) Scan() bool {
 		return false
 	}
 
-readRecord:
-	line, err := sc.lr.ReadLine()
-	if err == io.EOF {
-		return false
-	} else if err == endOfSource {
-		sc.fileRecNumber = 0
-		goto readRecord
-	} else if err != nil {
-		sc.err = err
-		return false
+	data, err := ioutil.ReadAll(sc.lr)
+	// line, err := sc.lr.ReadLine()
+	// if err == io.EOF {
+	// 	return false
+	// } else if err == endOfSource {
+	// 	sc.fileRecNumber = 0
+	// 	goto readRecord
+	// } else if err != nil {
+	// 	sc.err = err
+	// 	return false
+	// }
+	fail := len(data) == 0 || (err != nil && err != io.EOF)
+
+	if !fail {
+		sc.splitRecord(data)
+		sc.recNumber++
+		sc.fileRecNumber++
 	}
-	sc.splitRecord(line)
-	sc.recNumber++
-	sc.fileRecNumber++
-	return true
+
+	return !fail
 }
 
 func (sc *Scanner) splitRecord(rec []byte) {

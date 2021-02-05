@@ -15,14 +15,8 @@ type Analyser struct {
 
 func analyse(prog *Program, sc *scan.Scanner) {
 	a := &Analyser{prog, prog, sc}
-	for _, p := range prog.Begins {
-		a.walkPactions(p)
-	}
-	for _, p := range prog.Pactions {
-		a.walkPactions(p)
-	}
-	for _, p := range prog.Ends {
-		a.walkPactions(p)
+	for _, p := range prog.Actions {
+		a.walkActions(p)
 	}
 	for _, fn := range prog.funcs {
 		a.scope = fn.scope
@@ -30,18 +24,13 @@ func analyse(prog *Program, sc *scan.Scanner) {
 	}
 }
 
-func (a *Analyser) walkPactions(pa Stmt) {
+func (a *Analyser) walkActions(pa Stmt) {
 	if pa == nil {
 		return
 	}
 	switch pa := pa.(type) {
-	case *BeginAction:
+	case *Action:
 		a.walkStmt(pa.Stmt)
-	case *EndAction:
-		a.walkStmt(pa.Stmt)
-	case *PatternAction:
-		a.walkExpr(pa.X)
-		a.walkStmt(pa.Body)
 	default:
 		panic(fmt.Sprintf("unknown pattern-action: %T", pa))
 	}
